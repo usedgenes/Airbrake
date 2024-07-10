@@ -6,7 +6,7 @@ COLORS = ['g','g','r','c','m','y','k']
 
 
 class Rocket(turtle.Turtle):
-    def __init__(self, screen_width, screen_height, mass, mmoi, targetAltitude):
+    def __init__(self, screen_width, screen_height, mass, mmoi):
         screen = turtle.Screen()
         screen.setup(screen_width, screen_height)
         self.rocket = turtle.Turtle()

@@ -1,8 +1,7 @@
 class AirResistance():
-    def __init__(self, dragCoefficient, airDensity, crossSectionalArea):
-        self.dragCoefficient = dragCoefficient
+    def __init__(self, airDensity, crossSectionalArea):
         self.airDensity = airDensity
         self.crossSectionalArea = crossSectionalArea
         
-    def getDrag(self, velocity):
-        return 0.5*self.dragCoefficient*self.airDensity*self.crossSectionalArea*velocity*velocity
+    def getDrag(self, velocity, dragCoefficient):
+        return 0.5*dragCoefficient*self.airDensity*self.crossSectionalArea*velocity*velocity
