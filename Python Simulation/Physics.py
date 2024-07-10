@@ -23,6 +23,8 @@ class Physics():
         self.state_vector["ax"] = input_force_vector[1] / self.mass
         self.state_vector["alpha"] = input_force_vector[2] / self.mmoi
         self.state_vector["vy"] += self.state_vector["ay"] * dt
+        if(self.state_vector["py"] == 30 and self.state_vector["vy"] < 0):
+            self.state_vector["vy"] = 0
         self.state_vector["vx"] += self.state_vector["ax"] * dt
         self.state_vector["omega"] += self.state_vector["alpha"] * dt
         self.state_vector["py"] += self.state_vector["vy"] * dt
