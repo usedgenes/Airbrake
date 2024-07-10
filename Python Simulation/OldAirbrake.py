@@ -1,12 +1,15 @@
+firstLoop = True;
+alpha = None;
+currentAltitude = None;
+currentTime = None;
+filteredProjectedAltitude = None;
+ 
 class OldAirbrake():
-    firstLoop = True;
-    timeConstant = None;
-    alpha = None;
-    currentAltitude = None;
-    currentTime = None;
-    filteredProjectedAltitude = None;
-    
+   
     def __init__(self, closedDragCoefficient, openDragCoefficient, airDensity, area, mass, cutoffFrequency, initialAlpha, targetAltitude, maxEfficiency, motorDelay):
+        global alpha
+        global currentAltitude
+        global currentTime
         timeConstant = 1/(6.283 * cutoffFrequency)
         alpha = initialAlpha / (initialAlpha + timeConstant)
         currentAltitude = 30
@@ -29,6 +32,8 @@ class OldAirbrake():
         
         if(firstLoop == True):
             firstLoop = False
+            currentAltitude = altitude
+            currentTime = time
             filteredProjectedAltitude = currentAltitude
             return 0
         previousTime = currentTime
@@ -36,7 +41,7 @@ class OldAirbrake():
         previousAltitude = currentAltitude
         currentAltitude = altitude
         velocity = 1000*(currentAltitude - previousAltitude)/(currentTime - previousTime)
-        projectedAltitude = currentAltitude + (velocity * velocity / (19.6 + ((self.dragCoefficient * self.airDensity * velocity * velocity * self.area* 0.5) / self.mass)))
+        projectedAltitude = currentAltitude + (velocity * velocity / (19.6 + ((self.closedDragCoefficient * self.airDensity * velocity * velocity * self.area* 0.5) / self.mass)))
         previousFilteredProjectedAltitude = filteredProjectedAltitude;
         filteredProjectedAltitude = (projectedAltitude*alpha)+(previousFilteredProjectedAltitude*(1-alpha))
         
@@ -50,6 +55,8 @@ class OldAirbrake():
                     return (altitudeDifference / self.maxEfficiency) * (self.openDragCoefficient - self.closedDragCoefficient)
             else:
                 return 0
+        else:
+            return 0
 
         
  

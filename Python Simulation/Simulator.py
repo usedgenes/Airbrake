@@ -16,25 +16,31 @@ airDensity = 1.2
 area = 0.0034
 cutoffFrequency = 0.9
 initialAlpha = 0.03
-targetAltitude = 900
+targetAltitude = 870
 maxEfficiency = 3
 motorDelay = 1.5
 
-motor = thrust.ThrustCurve("AeroTech_F42T_L.csv", 0.08, 0.03)
+motor = thrust.ThrustCurve("AeroTech_F67W.csv", 0.08, 0.03)
 
 airResistance = drag.AirResistance(airDensity, area)
 
-rocket = Rocket.Rocket(1600,1600, mass, 1)
+normalRocket = Rocket.Rocket(1600,1600, mass, 1, 500)
+oldAirbrakeRocket = Rocket.Rocket(1600, 1600, mass, 1, 1000)
+airbrakeRocket = Rocket.Rocket(1600,1600, mass, 1, 1500)
 
 altimeter = Altimeter.Altimeter()
 
 oldAirbrake = OldAirbrake.OldAirbrake(dragCoefficient, openDragCoefficient, airDensity, area, mass, cutoffFrequency, initialAlpha, targetAltitude, maxEfficiency, motorDelay)
 
-airbrake = Airbrake.Airbrake(0.07, 0.01, 0.01, 0)
+airbrake = Airbrake.Airbrake(0.07, 0.01, 0.01, targetAltitude)
 
-state_vector = {"ay" : 0 ,"vy" : 0,"py" : 0,"ax" : 0 ,"vx" : 0,"px" : rocket.getX() ,"alpha" : 0.0,"omega" : 0.5,"theta" : 0.0}
+normalRocket_state_vector = {"ay" : 0 ,"vy" : 0,"py" : 0,"ax" : 0 ,"vx" : 0,"px" : normalRocket.getX() ,"alpha" : 0.0,"omega" : 0.5,"theta" : 0.0}
+oldAirbrakeRocket_state_vector = {"ay" : 0 ,"vy" : 0,"py" : 0,"ax" : 0 ,"vx" : 0,"px" : oldAirbrakeRocket.getX() ,"alpha" : 0.0,"omega" : 0.5,"theta" : 0.0}
+airbrakeRocket_state_vector = {"ay" : 0 ,"vy" : 0,"py" : 0,"ax" : 0 ,"vx" : 0,"px" : airbrakeRocket.getX() ,"alpha" : 0.0,"omega" : 0.5,"theta" : 0.0}
 
-rocket_phys = phys.Physics(state_vector, rocket.mass, rocket.mmoi)
+normalRocket_phys = phys.Physics(normalRocket_state_vector, normalRocket.mass, normalRocket.mmoi)
+oldAirbrakeRocket_phys = phys.Physics(oldAirbrakeRocket_state_vector, oldAirbrakeRocket.mass, oldAirbrakeRocket.mmoi)
+airbrakeRocket_phys = phys.Physics(airbrakeRocket_state_vector, airbrakeRocket.mass, airbrakeRocket.mmoi)
 
 
 sim_time = 0.0
@@ -42,31 +48,47 @@ time_lim = 10
 delta_t = 0.05
 
 time = []
-vert_pos = []
-vert_velocity = []
+normalRocket_vert_pos = []
+oldAirbrakeRocket_vert_pos = []
+airbrakeRocket_vert_pos = []
 
-vertical_velocity = {"xlab" : "time(s)", "ylab" : "velocity Y", "title" : "Velocity Y"}
 
-vertical_labels = {"xlab" : "time(s)", "ylab" : "Pos Y", "title" : "Position Y"}
+normalRocket_vertical_pos = {"xlab" : "time(s)", "ylab" : "Normal Rocket Pos Y", "title" : "Normal Rocket"}
+oldAirbrakeRocket_vertical_pos = {"xlab" : "time(s)", "ylab" : "Old Airbrake Rocket Pos Y", "title" : "Old Airbrake Rocket"}
+airbrakeRocket_vertical_pos = {"xlab" : "time(s)", "ylab" : "Airbrake Rocket Pos Y", "title" : "Airbrake Rocket"}
 
-graphs_dict = [vertical_velocity, vertical_labels]
+graphs_dict = [normalRocket_vertical_pos, oldAirbrakeRocket_vertical_pos, airbrakeRocket_vertical_pos]
 
 graphics = gh.GraphHandler()
-graphics.graphsHandler(2,graphs_dict)
+graphics.graphsHandler(3,graphs_dict)
 
 Time.sleep(3)
 
 while(sim_time < time_lim):
-    altitude = altimeter.getAltimeterData(state_vector)
-    time = altimeter.getTime(sim_time, delta_t)
-    airbrakeDrag = oldAirbrake.getDrag(altitude, time)
-    netVerticalForce = motor.getThrust(sim_time) - airResistance.getDrag(dragCoefficient + airbrakeDrag, state_vector["vy"])
-    state_vector = rocket_phys.inputForces([netVerticalForce, 0, 0], delta_t)
-    rocket.moveRocket(state_vector["px"], state_vector["py"])
+    thrust = motor.getThrust(sim_time)
     
-    vert_velocity.append(state_vector["vy"])
-    vert_pos.append(rocket.getY()-30)
-    graphs = [(time, vert_velocity), (time,vert_pos)]
+    #Normal Rocket:
+    drag = airResistance.getDrag(normalRocket_state_vector["vy"], dragCoefficient)
+    normalRocket_state_vector = normalRocket_phys.inputForces([thrust - drag, 0, 0], delta_t)
+    normalRocket.moveRocket(normalRocket_state_vector["px"], normalRocket_state_vector["py"])
+    
+    #Old Airbrake Rocket:
+    altimeterAltitude = altimeter.getAltimeterData(oldAirbrakeRocket_state_vector)
+    altimeterTime = altimeter.getTime(sim_time, delta_t)
+    airbrakeDrag = oldAirbrake.getDrag(altimeterAltitude, altimeterTime)
+    netVerticalForce = thrust - airResistance.getDrag(oldAirbrakeRocket_state_vector["vy"], dragCoefficient + airbrakeDrag)
+    oldAirbrakeRocket_state_vector = oldAirbrakeRocket_phys.inputForces([netVerticalForce, 0, 0], delta_t)
+    oldAirbrakeRocket.moveRocket(oldAirbrakeRocket_state_vector["px"], oldAirbrakeRocket_state_vector["py"])
+    
+    #Airbrake Rocket:
+    
+    airbrakeRocket_state_vector = airbrakeRocket_phys.inputForces([netVerticalForce, 0, 0], delta_t)
+    airbrakeRocket.moveRocket(airbrakeRocket_state_vector["px"], airbrakeRocket_state_vector["py"])
+    
+    normalRocket_vert_pos.append(normalRocket.getY()-30)
+    oldAirbrakeRocket_vert_pos.append(oldAirbrakeRocket.getY()-30)
+    airbrakeRocket_vert_pos.append(airbrakeRocket.getY()-30)
+    graphs = [(time, normalRocket_vert_pos), (time, oldAirbrakeRocket_vert_pos), (time, airbrakeRocket_vert_pos)]
     time.append(sim_time)
     sim_time += delta_t
     

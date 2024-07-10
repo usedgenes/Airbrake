@@ -6,7 +6,7 @@ COLORS = ['g','g','r','c','m','y','k']
 
 
 class Rocket(turtle.Turtle):
-    def __init__(self, screen_width, screen_height, mass, mmoi):
+    def __init__(self, screen_width, screen_height, mass, mmoi, horizontalPosition):
         screen = turtle.Screen()
         screen.setup(screen_width, screen_height)
         self.rocket = turtle.Turtle()
@@ -23,7 +23,7 @@ class Rocket(turtle.Turtle):
         self.rocket.resizemode("user")
         self.rocket.penup();
         self.rocket.shapesize(0.5, 0.5, 0)
-        self.rocket.setpos(screen_width/2, 30)
+        self.rocket.setpos(horizontalPosition, 30)
         self.mass = mass
         self.mmoi = mmoi
     def moveRocket(self, x, y):
