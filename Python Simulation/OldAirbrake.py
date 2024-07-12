@@ -57,6 +57,8 @@ class OldAirbrake():
                 return 0
         else:
             return 0
+    def getFilteredProjectedAltitude(self):
+        return filteredProjectedAltitude
 
         
  
