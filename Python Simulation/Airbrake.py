@@ -1,4 +1,7 @@
 previousTime = 0;
+error = 0;
+derivative_error = 0;
+output = 0;
 class Airbrake():
     def __init__(self, KP, KI, KD, targetAltitude, closedDragCoefficient, openDragCoefficient):
         self.kp = KP
@@ -13,6 +16,10 @@ class Airbrake():
         self.openDragCoefficient = openDragCoefficient
     def compute(self, currentAltitude, currentTime):
         global previousTime
+        global error
+        global derivative_error
+        global integral_error
+        global output
         dt = currentTime - previousTime
         if(dt == 0):
             return 0;
@@ -27,6 +34,22 @@ class Airbrake():
         elif output < self.saturation_min and self.saturation_min is not None:
             output = self.saturation_min
         return (self.openDragCoefficient-self.closedDragCoefficient)*output
+    
     def setLims(self,min,max):
         self.saturation_max = max
         self.saturation_min = min
+        
+    def getError(self):
+        global error
+        return error
+    
+    def getDerivativeError(self):
+        global derivative_error
+        return derivative_error
+    
+    def getIntegralError(self):
+        return self.integral_error
+    
+    def getOutput(self):
+        global output
+        return output

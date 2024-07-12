@@ -16,15 +16,16 @@
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define CLOSED_DRAG_COEFFICIENT (0.5)
 #define OPENED_DRAG_COEFFICIENT (0.8)
-#define Kp (0.0005)
-#define Ki (0.000085)
-#define Kd (0)
+#define Kp (0.0003)
+#define Ki (00005)
+#define Kd (0.05)
 #define TARGET_ALTITUDE (850)
-#define MAX (1)
-#define MIN (0)
+#define MAX_OUTPUT (1)
+#define MIN_OUTPUT (0)
+#define MIN_SERVO_POSITION (10)
+#define MAX_SERVO_POSITION (150)
 
 float launchAltitude;
-unsigned long currentTime;
 unsigned long launchTime;
 int servoPosition;
 float previousError;
@@ -41,8 +42,8 @@ void setup() {
   Serial.begin(115200);
 
   servo.attach(9);
-  servo.write(10);
-  servoPosition = 10;
+  servo.write(MIN_SERVO_POSITION);
+  servoPosition = MIN_SERVO_POSITION;
 
   if (!SD.begin(10)) {
     myFile = SD.open("LOGGER.TXT", FILE_WRITE);
@@ -106,12 +107,8 @@ void setup() {
     currentAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
   }
  
-  launchTime = millis();
-  currentTime = launchTime;
-
-
   myFile = SD.open("LOGGER.TXT", FILE_WRITE);
-  myFile.print(launchTime);
+  myFile.print(millis());
   myFile.print(" ");
   myFile.println(" Launched");
   myFile.close();
@@ -120,7 +117,11 @@ void setup() {
 
 
 void loop() {
-
+  float currentAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  unsigned long currentTime = millis();
+  float pidDrag = pid(currentAltitude, currentTime);
+  servoPosition = MIN_SERVO_POSITION + (pidDrag / (OPENED_DRAG_COEFFICIENT - CLOSED_DRAG_COEFFICIENT)) * (MAX_SERVO_POSITION - MIN_SERVO_POSITION);
+  servo.write(servoPosition);
   logger(currentTime, currentAltitude, bmp.pressure, servoPosition);
 }
 
@@ -133,16 +134,19 @@ float pid(float currentAltitude, unsigned long currentTime) {
   previousTime = currentTime;
   float error = 3.28*(adjustedTargetAltitude - currentAltitude);
   float derivativeError = (error - previousError) / dt;
-  float integralError += error * dt;
-  
-  float output = Kp*error + Ki*integralError + Kd*derivativeError
-  if (output > self.saturation_max) {
-    output = self.saturation_max;
+  integralError += error * dt;
+  float output = Kp*error + Ki*integralError + Kd*derivativeError;
+  previousError = error;
+
+  if (output > MAX_OUTPUT) {
+    output = MAX_OUTPUT;
   }
-  else if (output < self.saturation_min) {
-    output = self.saturation_min
+  else if (output < MIN_OUTPUT) {
+    output = MIN_OUTPUT;
   }
-  return (OPENED_DRAG_COEFFICIENT-CLOSED_DRAG_COEFFICIENT)*output;
+
+  pidLogger(currentTime, dt, error, derivativeError, integralError, output);
+  return output;
 }
 
 
@@ -158,8 +162,25 @@ void logger(unsigned long time, float altitude, float pressure, int servoPositio
     myFile.print(" ");
     myFile.println(servoPosition);
     myFile.close();
-  } else {
-    myFile.println("ERROR");
+  } 
+}
+
+
+void pidLogger(unsigned long time, unsigned long dt, float error, float derivativeError, float integralError, float output) {
+  myFile = SD.open("PID.TXT", FILE_WRITE);
+ 
+  if (myFile) {
+    myFile.print(time);
+    myFile.print(" ");
+    myFile.print(dt);
+    myFile.print(" ");
+    myFile.print(error);
+    myFile.print(" ");
+    myFile.print(derivativeError);
+    myFile.print(" ");
+    myFile.println(integralError);
+    myFile.print(" ");
+    myFile.println(output);
     myFile.close();
-  }
+  } 
 }
