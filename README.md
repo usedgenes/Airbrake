@@ -14,5 +14,7 @@ BMP390
 SD card module
 7.4v Lipo battery
 
+Link to the CAD files: https://cad.onshape.com/documents/ae3e569ec67173b7e15d4f91/w/e4bd71f28ac7837aae9bb0d0/e/4af31456cef63293cc1a82e8?renderMode=0&uiState=66dbf4e0bf94e2384714ffb7
+
 What the airbrake looks like:  
 ![Airbrake](https://github.com/usedgenes/Airbrake/blob/main/Parts/Airbrake%20Picture.png)
