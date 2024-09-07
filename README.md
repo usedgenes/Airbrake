@@ -13,3 +13,6 @@ Arduino Pro Mini
 BMP390
 SD card module
 7.4v Lipo battery
+
+What the airbrake looks like:  
+![Airbrake](https://github.com/usedgenes/Airbrake/blob/main/Parts/Airbrake%20Picture.png)
